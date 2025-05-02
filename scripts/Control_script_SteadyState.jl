@@ -1,9 +1,7 @@
-using MAT
 using Pkg
 AURORA_dir = "/mnt/data/oliver/AURORA.jl/"
 Pkg.activate(AURORA_dir)
 using AURORA
-
 
 
 ## Setting parameters
@@ -52,66 +50,6 @@ for i in length(e_grid)-1:-1:1
     calculate_e_transport_steady_state(altitude_lims, θ_lims, E_max, B_angle_to_zenith,
         msis_file, iri_file, savedir, INPUT_OPTIONS);
 end
-
-
-## Run the analysis
-directory_to_process = joinpath(AURORA_dir, "data", root_savedir)
-subdirs = readdir(directory_to_process, join=true)
-for dir in subdirs
-    make_volume_excitation_file(dir)
-end
-
-
-
-dE = diff(e_grid)                                   
-E = e_grid[1:end-1] + dE/2                          # already centre energy bins
-
-h_atm = []
-QN2i      = []
-QO1D      = []
-QO1S      = []
-QO2i      = []
-QOi       = []
-Q_from_O  = []
-Q_from_O2 = []
-Q_from_N2 = []
-
-for i in length(e_grid)-1:-1:353
-    E_max = e_grid[i+1]
-    E_min = e_grid[i]
-   
-    name_savedir = string(E_min)*'-'*string(E_max) * "eV"
-    f = matopen(joinpath(directory_to_process, name_savedir, "Qzt_all_L.mat"))
-        push!(h_atm, read(f, "h_atm"))
-        push!(QN2i      , read(f, "QN2i"     ))
-        push!(QO1D      , read(f, "QO1D"     ))
-        push!(QO1S      , read(f, "QO1S"     ))
-        push!(QO2i      , read(f, "QO2i"     ))
-        push!(QOi       , read(f, "QOi"      ))
-        push!(Q_from_O  , read(f, "Q_from_O" ))
-        push!(Q_from_O2 , read(f, "Q_from_O2"))
-        push!(Q_from_N2 , read(f, "Q_from_N2"))
-    close(f)
-end
-
-h_atm = h_atm[1]
-QN2i      = reduce(hcat, QN2i     )
-QO1D      = reduce(hcat, QO1D     )
-QO1S      = reduce(hcat, QO1S     )
-QO2i      = reduce(hcat, QO2i     )
-QOi       = reduce(hcat, QOi      )
-Q_from_O  = reduce(hcat, Q_from_O )
-Q_from_O2 = reduce(hcat, Q_from_O2)
-Q_from_N2 = reduce(hcat, Q_from_N2)
-
-
-fig = Figure();
-sc = display(fig);
-ax = Axis(fig[1, 1], title = "Figure 1", xlabel = "x", ylabel = "y")
-lines!(Q_from_O[:, 1], h_atm/1e3)
-current_figure()
-save(joinpath(directory_to_process, name_savedir, "figure.pdf"), fig, pdf_version="1.4")
-p = lines(QN2i, h_atm/1e3, label = e_grid[i])
 
 
 #to do: plot production profiles, assemble production in matrix
